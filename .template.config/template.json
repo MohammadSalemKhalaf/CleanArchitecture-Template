@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "MohammadSalemKhalaf",
+  "classifications": [ "Web", "API", "Clean Architecture", "CQRS" ],
+  "identity": "CleanArchitecture.Template.Api",
+  "groupIdentity": "CleanArchitecture.Template",
+  "name": "Clean Architecture Web API (vertical slices, CQRS, EF Core, Redis, Serilog/Seq)",
+  "description": "ASP.NET Core API with Domain/Application/Infrastructure/Api layers, MediatR use cases, Result pattern, HybridCache + Redis, Docker Compose, GitHub Actions CI/CD and architecture tests.",
+  "shortName": "cleanarch-api",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "symbols": {
+    "AppName": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "appName",
+      "replaces": "TemplateApp",
+      "fileRename": "TemplateApp",
+      "description": "Project, namespace, assembly and file prefix. The same namespace-safe value is used for file names and content, so paths and references always agree (acme-billing becomes Acme_billing)."
+    },
+    "AppSlug": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "slug",
+      "replaces": "templateapp",
+      "description": "Lowercase identifier for Docker image names, Redis key prefixes and token issuer/audience defaults."
+    }
+  },
+  "forms": {
+    "appName": {
+      "identifier": "chain",
+      "steps": [ "safe_namespace", "firstUpper" ]
+    },
+    "firstUpper": {
+      "identifier": "firstUpperCaseInvariant"
+    },
+    "slug": {
+      "identifier": "chain",
+      "steps": [ "lowerCaseInvariant", "slugCharacters" ]
+    },
+    "slugCharacters": {
+      "identifier": "replace",
+      "pattern": "[^a-z0-9]+",
+      "replacement": "-"
+    }
+  },
+  "guids": [
+    "5f0f7d4e-3c1a-4b8e-9a51-2f6c1d8e7b90"
+  ],
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/[Bb]in/**",
+            "**/[Oo]bj/**",
+            "**/TestResults/**",
+            "**/.vs/**",
+            "**/.idea/**",
+            "**/.vscode/**",
+            "**/*.user",
+            ".git/**",
+            ".env",
+            "deploy/release.env",
+            "deploy/previous-image"
+          ]
+        }
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    { "path": "TemplateApp.slnx" }
+  ]
+}

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TemplateApp.Application\TemplateApp.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Handler logic only. Database behaviour (unique indexes, SQL translation) is covered by Infrastructure.IntegrationTests. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,73 @@
+name: Release
+
+# Every push to main: run CI, publish an image tagged with the commit SHA, then deploy it.
+# Deployment is skipped until the repository variable DEPLOY_ENABLED is set to "true" (see README > CI/CD).
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # Never interrupt a deployment half-way.
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish image
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: sha-${{ github.sha }}
+    env:
+      REGISTRY: ${{ vars.REGISTRY || 'ghcr.io' }}
+      IMAGE_NAME: ${{ vars.IMAGE_NAME || github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          # GHCR works with the built-in token. Other registries need REGISTRY_USERNAME / REGISTRY_PASSWORD secrets.
+          username: ${{ secrets.REGISTRY_USERNAME || github.actor }}
+          password: ${{ secrets.REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy
+    needs: publish
+    if: vars.DEPLOY_ENABLED == 'true'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image-tag: ${{ needs.publish.outputs.image-tag }}
+      environment: production
+    secrets: inherit
