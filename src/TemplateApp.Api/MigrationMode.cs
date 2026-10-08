@@ -1,5 +1,5 @@
 using TemplateApp.Infrastructure;
-using TemplateApp.Infrastructure.Persistence;
+using TemplateApp.Infrastructure.Data;
 
 namespace TemplateApp.Api;
 
@@ -23,7 +23,7 @@ internal static class MigrationMode
         }
 
         await using var scope = app.Services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().MigrateAsync();
+        await scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>().MigrateAsync();
 
         return 0;
     }

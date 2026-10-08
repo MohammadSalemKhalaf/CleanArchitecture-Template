@@ -1,16 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-using TemplateApp.Application.Common.Caching;
-using TemplateApp.Infrastructure.IntegrationTests.Support;
+using TemplateApp.Application.Common.Interfaces;
+using TemplateApp.Infrastructure.IntegrationTests.Common;
 
 namespace TemplateApp.Infrastructure.IntegrationTests.Caching;
 
 /// <summary>Cache behaviour with the in-process tier only, and with an unreachable Redis.</summary>
 public sealed class HybridCacheServiceTests : IAsyncDisposable
 {
-    private static readonly CacheEntrySettings Entry = new(TimeSpan.FromMinutes(5), ["things"]);
-
     private readonly ServiceProvider _services = InfrastructureHost.Build(new Dictionary<string, string?>
     {
         ["ConnectionStrings:Database"] = "Server=unused;Database=unused",
@@ -23,8 +21,8 @@ public sealed class HybridCacheServiceTests : IAsyncDisposable
     {
         var calls = 0;
 
-        var first = await Cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult($"value-{++calls}"), Entry);
-        var second = await Cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult($"value-{++calls}"), Entry);
+        var first = await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult($"value-{++calls}"));
+        var second = await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult($"value-{++calls}"));
 
         Assert.Equal("value-1", first);
         Assert.Equal("value-1", second);
@@ -35,36 +33,36 @@ public sealed class HybridCacheServiceTests : IAsyncDisposable
     public async Task RemoveByTag_ForcesTheNextReadToMiss()
     {
         var calls = 0;
-        await Cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult(++calls), Entry);
-        await Cache.GetOrCreateAsync("thing:2", _ => ValueTask.FromResult(++calls), Entry);
+        await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult(++calls));
+        await Cache.GetOrCreateAsync(new TestCachedQuery("thing:2"), _ => ValueTask.FromResult(++calls));
 
         await Cache.RemoveByTagAsync("things");
 
-        Assert.Equal(3, await Cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult(++calls), Entry));
-        Assert.Equal(4, await Cache.GetOrCreateAsync("thing:2", _ => ValueTask.FromResult(++calls), Entry));
+        Assert.Equal(3, await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult(++calls)));
+        Assert.Equal(4, await Cache.GetOrCreateAsync(new TestCachedQuery("thing:2"), _ => ValueTask.FromResult(++calls)));
     }
 
     [Fact]
     public async Task RemoveByTag_LeavesOtherTagsCached()
     {
-        var other = new CacheEntrySettings(TimeSpan.FromMinutes(5), ["others"]);
+        var other = new TestCachedQuery("other:1", "others");
         var calls = 0;
-        await Cache.GetOrCreateAsync("other:1", _ => ValueTask.FromResult(++calls), other);
+        await Cache.GetOrCreateAsync(other, _ => ValueTask.FromResult(++calls));
 
         await Cache.RemoveByTagAsync("things");
 
-        Assert.Equal(1, await Cache.GetOrCreateAsync("other:1", _ => ValueTask.FromResult(++calls), other));
+        Assert.Equal(1, await Cache.GetOrCreateAsync(other, _ => ValueTask.FromResult(++calls)));
     }
 
     [Fact]
     public async Task Remove_EvictsASingleKey()
     {
         var calls = 0;
-        await Cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult(++calls), Entry);
+        await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult(++calls));
 
         await Cache.RemoveAsync("thing:1");
 
-        Assert.Equal(2, await Cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult(++calls), Entry));
+        Assert.Equal(2, await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult(++calls)));
     }
 
     [Fact]
@@ -79,10 +77,10 @@ public sealed class HybridCacheServiceTests : IAsyncDisposable
         }
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await Cache.GetOrCreateAsync("thing:1", FailingFactory, Entry));
+            await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), FailingFactory));
 
         Assert.Equal(1, calls); // Not retried by the fail-open path.
-        Assert.Equal(7, await Cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult(7), Entry));
+        Assert.Equal(7, await Cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult(7)));
     }
 
     [Fact]
@@ -97,7 +95,7 @@ public sealed class HybridCacheServiceTests : IAsyncDisposable
         });
         var cache = services.GetRequiredService<ICacheService>();
 
-        var value = await cache.GetOrCreateAsync("thing:1", _ => ValueTask.FromResult("from source"), Entry);
+        var value = await cache.GetOrCreateAsync(new TestCachedQuery("thing:1"), _ => ValueTask.FromResult("from source"));
         await cache.RemoveByTagAsync("things");
 
         Assert.Equal("from source", value);

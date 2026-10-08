@@ -13,6 +13,7 @@ public sealed class LayerDependencyTests
         AssertNoDependency(
             Types.InAssembly(Layers.Domain),
             Layers.ApplicationNamespace,
+            Layers.ContractsNamespace,
             Layers.InfrastructureNamespace,
             Layers.ApiNamespace,
             "MediatR",
@@ -25,12 +26,26 @@ public sealed class LayerDependencyTests
     }
 
     [Fact]
-    public void Application_DoesNotDependOnInfrastructureApiOrProviders()
+    public void Contracts_DependOnNothing()
+    {
+        AssertNoDependency(
+            Types.InAssembly(Layers.Contracts),
+            Layers.DomainNamespace,
+            Layers.ApplicationNamespace,
+            Layers.InfrastructureNamespace,
+            Layers.ApiNamespace);
+
+        AssertReferencesOnlyFramework(Layers.Contracts);
+    }
+
+    [Fact]
+    public void Application_DoesNotDependOnInfrastructureApiContractsOrProviders()
     {
         AssertNoDependency(
             Types.InAssembly(Layers.Application),
             Layers.InfrastructureNamespace,
             Layers.ApiNamespace,
+            Layers.ContractsNamespace,
             "Microsoft.AspNetCore",
             "Microsoft.EntityFrameworkCore.SqlServer",
             "Microsoft.Data.SqlClient",
@@ -40,21 +55,22 @@ public sealed class LayerDependencyTests
     }
 
     [Fact]
-    public void Infrastructure_DoesNotDependOnTheApi()
+    public void Infrastructure_DoesNotDependOnTheApiOrContracts()
     {
         AssertNoDependency(
             Types.InAssembly(Layers.Infrastructure),
             Layers.ApiNamespace,
+            Layers.ContractsNamespace,
             "Microsoft.AspNetCore");
     }
 
     [Fact]
-    public void Endpoints_GoThroughUseCasesInsteadOfPersistence()
+    public void Controllers_GoThroughUseCasesInsteadOfPersistence()
     {
         AssertNoDependency(
-            Types.InAssembly(Layers.Api).That().ResideInNamespace($"{Layers.ApiNamespace}.Endpoints"),
+            Types.InAssembly(Layers.Api).That().ResideInNamespace($"{Layers.ApiNamespace}.Controllers"),
             Layers.InfrastructureNamespace,
-            "TemplateApp.Application.Common.Data",
+            $"{Layers.ApplicationNamespace}.Common.Interfaces.IAppDbContext",
             "Microsoft.EntityFrameworkCore");
     }
 

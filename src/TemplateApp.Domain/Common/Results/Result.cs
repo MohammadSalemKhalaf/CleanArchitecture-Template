@@ -1,3 +1,5 @@
+using TemplateApp.Domain.Common.Results.Abstractions;
+
 namespace TemplateApp.Domain.Common.Results;
 
 public static class Result

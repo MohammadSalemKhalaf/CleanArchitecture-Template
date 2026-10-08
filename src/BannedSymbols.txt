@@ -1,0 +1,7 @@
+P:System.DateTime.Now;Inject TimeProvider instead, so time-dependent code is testable
+P:System.DateTime.UtcNow;Inject TimeProvider instead, so time-dependent code is testable
+P:System.DateTimeOffset.Now;Inject TimeProvider instead, so time-dependent code is testable
+P:System.DateTimeOffset.UtcNow;Inject TimeProvider instead, so time-dependent code is testable
+P:System.Threading.Tasks.Task`1.Result;Await instead of blocking on async code
+M:System.Threading.Tasks.Task.Wait;Await instead of blocking on async code
+M:System.Console.WriteLine;Use ILogger<T> so the event is structured and reaches Seq

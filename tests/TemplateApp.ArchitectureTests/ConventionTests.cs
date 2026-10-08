@@ -4,11 +4,15 @@ using FluentValidation;
 
 using MediatR;
 
-using TemplateApp.Application.Common.Messaging;
+using TemplateApp.Api.Controllers;
+using TemplateApp.Application.Common.Interfaces;
 
 namespace TemplateApp.ArchitectureTests;
 
-/// <summary>Vertical-slice conventions: each use case is one request, one handler and its validator, side by side.</summary>
+/// <summary>
+/// Feature conventions from the original project: Features/&lt;Feature&gt;/{Commands|Queries}/&lt;UseCase&gt;/ holds one request,
+/// its handler and its validator; Dtos/ and Mappers/ sit next to them; controllers only translate HTTP.
+/// </summary>
 public sealed class ConventionTests
 {
     private static readonly Type[] ApplicationTypes = Layers.Application.GetTypes();
@@ -19,23 +23,29 @@ public sealed class ConventionTests
     [Fact]
     public void ThereAreRequestsToCheck()
     {
+        // Guards against scanning the wrong assembly, which would make every other convention test pass vacuously.
         Assert.NotEmpty(Requests());
     }
 
     [Theory]
     [MemberData(nameof(Requests))]
-    public void Request_IsExactlyOneOfCommandOrQuery_AndNamedAccordingly(Type request)
+    public void Request_IsACommandOrAQuery_InItsOwnUseCaseFolder(Type request)
     {
         var isCommand = ImplementsGeneric(request, typeof(ICommand<>));
         var isQuery = ImplementsGeneric(request, typeof(IQuery<>));
-
         Assert.True(isCommand ^ isQuery, $"{request.Name} must implement exactly one of ICommand<T> or IQuery<T>.");
-        Assert.EndsWith(isCommand ? "Command" : "Query", request.Name, StringComparison.Ordinal);
+
+        var suffix = isCommand ? "Command" : "Query";
+        var folder = isCommand ? "Commands" : "Queries";
+        var useCase = request.Name[..^suffix.Length];
+
+        Assert.EndsWith(suffix, request.Name, StringComparison.Ordinal);
+        Assert.Matches($@"^{Layers.ApplicationNamespace}\.Features\.\w+\.{folder}\.{useCase}$", request.Namespace);
     }
 
     [Theory]
     [MemberData(nameof(Requests))]
-    public void Request_HasOneSealedHandlerInTheSameUseCaseFolder(Type request)
+    public void Request_HasOneSealedHandlerNextToIt(Type request)
     {
         var handlers = ApplicationTypes
             .Where(type => type.GetInterfaces().Any(i =>
@@ -51,7 +61,7 @@ public sealed class ConventionTests
     }
 
     [Fact]
-    public void Validators_AreSealedAndLiveNextToTheirRequest()
+    public void Validators_AreSealedNamedAfterAndPlacedNextToTheirRequest()
     {
         var validators = ApplicationTypes
             .Where(type => type is { IsAbstract: false } && ImplementsGeneric(type, typeof(IValidator<>)))
@@ -67,6 +77,49 @@ public sealed class ConventionTests
 
             Assert.True(validator.IsSealed, $"{validator.Name} should be sealed.");
             Assert.Equal(validated.Namespace, validator.Namespace);
+            Assert.Equal($"{validated.Name}Validator", validator.Name);
+        }
+    }
+
+    [Fact]
+    public void DtosAndMappers_LiveInTheirFeatureFolders()
+    {
+        var misplaced = ApplicationTypes
+            .Where(type => type.Namespace?.StartsWith($"{Layers.ApplicationNamespace}.Features.", StringComparison.Ordinal) == true)
+            .Where(type => (type.Name.EndsWith("Dto", StringComparison.Ordinal) && !type.Namespace!.EndsWith(".Dtos", StringComparison.Ordinal))
+                        || (type.Name.EndsWith("Mapper", StringComparison.Ordinal) && !type.Namespace!.EndsWith(".Mappers", StringComparison.Ordinal)))
+            .Select(type => type.FullName)
+            .ToList();
+
+        Assert.Empty(misplaced);
+    }
+
+    [Fact]
+    public void CacheInterfaces_AreUsedOnTheRightKindOfRequest()
+    {
+        var cachedNonQueries = ApplicationTypes
+            .Where(type => typeof(ICachedQuery).IsAssignableFrom(type) && type.IsClass && !ImplementsGeneric(type, typeof(IQuery<>)));
+        var invalidatingNonCommands = ApplicationTypes
+            .Where(type => typeof(IInvalidatesCache).IsAssignableFrom(type) && type.IsClass && !ImplementsGeneric(type, typeof(ICommand<>)));
+
+        Assert.Empty(cachedNonQueries);
+        Assert.Empty(invalidatingNonCommands);
+    }
+
+    [Fact]
+    public void Controllers_AreSealedAndDeriveFromApiController()
+    {
+        var controllers = Layers.Api.GetTypes()
+            .Where(type => type is { IsClass: true, IsAbstract: false } && type.Name.EndsWith("Controller", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(controllers);
+
+        foreach (var controller in controllers)
+        {
+            Assert.True(controller.IsSealed, $"{controller.Name} should be sealed.");
+            Assert.True(controller.IsSubclassOf(typeof(ApiController)), $"{controller.Name} should derive from ApiController.");
+            Assert.Equal($"{Layers.ApiNamespace}.Controllers", controller.Namespace);
         }
     }
 

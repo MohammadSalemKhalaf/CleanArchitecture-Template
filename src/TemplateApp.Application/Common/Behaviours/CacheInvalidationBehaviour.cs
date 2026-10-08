@@ -1,7 +1,7 @@
 using MediatR;
 
-using TemplateApp.Application.Common.Caching;
-using TemplateApp.Domain.Common.Results;
+using TemplateApp.Application.Common.Interfaces;
+using TemplateApp.Domain.Common.Results.Abstractions;
 
 namespace TemplateApp.Application.Common.Behaviours;
 

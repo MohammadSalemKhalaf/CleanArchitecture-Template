@@ -1,8 +1,10 @@
+using Scalar.AspNetCore;
+
 using Serilog;
 
 using TemplateApp.Api;
-using TemplateApp.Application;
-using TemplateApp.Infrastructure;
+using TemplateApp.Api.Extensions;
+using TemplateApp.Infrastructure.Data;
 
 // Console-only logger for failures before the host's configuration is loaded.
 Log.Logger = new LoggerConfiguration()
@@ -18,9 +20,9 @@ try
         .ReadFrom.Services(services));
 
     builder.Services
+        .AddPresentation()
         .AddApplication()
-        .AddInfrastructure(builder.Configuration)
-        .AddApi();
+        .AddInfrastructure(builder.Configuration);
 
     var app = builder.Build();
 
@@ -29,7 +31,25 @@ try
         return await MigrationMode.RunAsync(app);
     }
 
-    app.UseApi();
+    // Optional services, switched by configuration (see README > Configuration).
+    if (app.Configuration.GetValue<bool>("OpenApi:Enabled"))
+    {
+        app.MapOpenApi().WithDocumentPerVersion();
+        app.MapScalarApiReference(options =>
+        {
+            foreach (var description in app.DescribeApiVersions())
+            {
+                options.AddDocument(description.GroupName, description.GroupName);
+            }
+        });
+    }
+
+    await app.Services.InitialiseDatabaseAsync();
+
+    app.UseCoreMiddlewares();
+
+    app.MapControllers();
+    app.MapHealthEndpoints();
 
     await app.RunAsync();
     return 0;
@@ -44,6 +64,3 @@ finally
 {
     await Log.CloseAndFlushAsync();
 }
-
-/// <summary>Entry point marker for <c>WebApplicationFactory</c> in the API integration tests.</summary>
-public partial class Program;

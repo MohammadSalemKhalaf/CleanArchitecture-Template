@@ -484,3 +484,43 @@ $RECYCLE.BIN/
 # Deployment state written by deploy/deploy.sh
 deploy/release.env
 deploy/previous-image
+
+# ---- Template additions: secrets, keys, backups and local data ----------------
+# Environment files: only the committed *.example files are safe.
+.env.*
+!.env.example
+*.env
+**/secrets.json
+**/appsettings.*.local.json
+**/appsettings.Local.json
+
+# Private keys and certificates with private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.snk
+id_rsa*
+id_ecdsa*
+id_ed25519*
+
+# Backups and editor leftovers
+*.bak
+*.backup
+*.orig
+*.tmp
+*~
+
+# Local databases and container data
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+/.data/
+/volumes/
+
+# Test and coverage output
+coverage/
+*.coverage
+*.coveragexml

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test data factories shared by every test project, as in the original project's Tests.Common. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TemplateApp.Domain\TemplateApp.Domain.csproj" />
+    <ProjectReference Include="..\..\src\TemplateApp.Contracts\TemplateApp.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

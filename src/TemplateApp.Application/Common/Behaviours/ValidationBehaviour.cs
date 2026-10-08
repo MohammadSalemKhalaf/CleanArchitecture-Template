@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 
 using TemplateApp.Domain.Common.Results;
+using TemplateApp.Domain.Common.Results.Abstractions;
 
 namespace TemplateApp.Application.Common.Behaviours;
 

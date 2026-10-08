@@ -8,8 +8,10 @@ WORKDIR /src
 
 # Restore first, from project files only, so this layer is reused until a dependency changes.
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY src/Directory.Build.props src/BannedSymbols.txt src/
 COPY src/TemplateApp.Domain/TemplateApp.Domain.csproj src/TemplateApp.Domain/
 COPY src/TemplateApp.Application/TemplateApp.Application.csproj src/TemplateApp.Application/
+COPY src/TemplateApp.Contracts/TemplateApp.Contracts.csproj src/TemplateApp.Contracts/
 COPY src/TemplateApp.Infrastructure/TemplateApp.Infrastructure.csproj src/TemplateApp.Infrastructure/
 COPY src/TemplateApp.Api/TemplateApp.Api.csproj src/TemplateApp.Api/
 RUN dotnet restore src/TemplateApp.Api/TemplateApp.Api.csproj

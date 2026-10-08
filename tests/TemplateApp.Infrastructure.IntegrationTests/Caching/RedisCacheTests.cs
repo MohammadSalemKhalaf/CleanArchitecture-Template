@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-using TemplateApp.Application.Common.Caching;
-using TemplateApp.Infrastructure.IntegrationTests.Support;
+using TemplateApp.Application.Common.Interfaces;
+using TemplateApp.Infrastructure.IntegrationTests.Common;
 
 using Testcontainers.Redis;
 
@@ -12,7 +12,6 @@ namespace TemplateApp.Infrastructure.IntegrationTests.Caching;
 public sealed class RedisCacheTests : IAsyncLifetime
 {
     private static readonly TimeSpan LocalExpiration = TimeSpan.FromSeconds(1);
-    private static readonly CacheEntrySettings Entry = new(TimeSpan.FromMinutes(5), ["things"]);
 
     private readonly RedisContainer _redis = new RedisBuilder(InfrastructureHost.RedisImage).Build();
     private ServiceProvider _instanceA = null!;
@@ -30,9 +29,9 @@ public sealed class RedisCacheTests : IAsyncLifetime
     public async Task ValueCachedByOneInstance_IsServedToAnotherFromRedis()
     {
         var key = $"thing:{Guid.NewGuid():N}";
-        await CacheOf(_instanceA).GetOrCreateAsync(key, _ => ValueTask.FromResult("from A"), Entry);
+        await CacheOf(_instanceA).GetOrCreateAsync(new TestCachedQuery(key), _ => ValueTask.FromResult("from A"));
 
-        var seenByB = await CacheOf(_instanceB).GetOrCreateAsync(key, _ => ValueTask.FromResult("from B's source"), Entry);
+        var seenByB = await CacheOf(_instanceB).GetOrCreateAsync(new TestCachedQuery(key), _ => ValueTask.FromResult("from B's source"));
 
         Assert.Equal("from A", seenByB);
     }
@@ -41,13 +40,13 @@ public sealed class RedisCacheTests : IAsyncLifetime
     public async Task InvalidationOnOneInstance_ReachesAnotherWithinTheLocalExpiration()
     {
         var key = $"thing:{Guid.NewGuid():N}";
-        await CacheOf(_instanceA).GetOrCreateAsync(key, _ => ValueTask.FromResult("v1"), Entry);
-        await CacheOf(_instanceB).GetOrCreateAsync(key, _ => ValueTask.FromResult("unused"), Entry);
+        await CacheOf(_instanceA).GetOrCreateAsync(new TestCachedQuery(key), _ => ValueTask.FromResult("v1"));
+        await CacheOf(_instanceB).GetOrCreateAsync(new TestCachedQuery(key), _ => ValueTask.FromResult("unused"));
 
         await CacheOf(_instanceA).RemoveByTagAsync("things");
         await Task.Delay(LocalExpiration + TimeSpan.FromMilliseconds(500));
 
-        var seenByB = await CacheOf(_instanceB).GetOrCreateAsync(key, _ => ValueTask.FromResult("v2"), Entry);
+        var seenByB = await CacheOf(_instanceB).GetOrCreateAsync(new TestCachedQuery(key), _ => ValueTask.FromResult("v2"));
 
         Assert.Equal("v2", seenByB);
     }
