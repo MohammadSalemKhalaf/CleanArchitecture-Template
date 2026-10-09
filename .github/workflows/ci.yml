@@ -35,8 +35,13 @@ jobs:
       - name: Restore
         run: dotnet restore
 
+      # Warnings are errors: StyleCop, .editorconfig and the banned-API analyzer (src/BannedSymbols.txt) fail this step.
       - name: Build
         run: dotnet build --configuration Release --no-restore
+
+      # Layer boundaries and folder conventions (RULES-COMPOSE.md > Enforcement). Fast, and fails before the slow suites.
+      - name: Architecture rules
+        run: dotnet test tests/TemplateApp.ArchitectureTests --configuration Release --no-build
 
       # Integration tests start SQL Server and Redis with Testcontainers; the hosted runner provides Docker.
       - name: Test

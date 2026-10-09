@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/TemplateApp.Api/TemplateApp.Api.csproj" />
     <Project Path="src/TemplateApp.Application/TemplateApp.Application.csproj" />
+    <Project Path="src/TemplateApp.Contracts/TemplateApp.Contracts.csproj" />
     <Project Path="src/TemplateApp.Domain/TemplateApp.Domain.csproj" />
     <Project Path="src/TemplateApp.Infrastructure/TemplateApp.Infrastructure.csproj" />
   </Folder>
@@ -11,5 +12,6 @@
     <Project Path="tests/TemplateApp.ArchitectureTests/TemplateApp.ArchitectureTests.csproj" />
     <Project Path="tests/TemplateApp.Domain.UnitTests/TemplateApp.Domain.UnitTests.csproj" />
     <Project Path="tests/TemplateApp.Infrastructure.IntegrationTests/TemplateApp.Infrastructure.IntegrationTests.csproj" />
+    <Project Path="tests/TemplateApp.Tests.Common/TemplateApp.Tests.Common.csproj" />
   </Folder>
 </Solution>

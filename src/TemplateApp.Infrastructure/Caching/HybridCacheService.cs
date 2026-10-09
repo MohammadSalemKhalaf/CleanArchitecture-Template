@@ -2,7 +2,8 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-using TemplateApp.Application.Common.Caching;
+using TemplateApp.Application.Common.Interfaces;
+using TemplateApp.Infrastructure.Settings;
 
 namespace TemplateApp.Infrastructure.Caching;
 
@@ -19,15 +20,15 @@ internal sealed class HybridCacheService(
     private readonly TimeSpan _localExpiration = options.Value.LocalExpiration;
 
     public async ValueTask<T> GetOrCreateAsync<T>(
-        string key,
+        ICachedQuery query,
         Func<CancellationToken, ValueTask<T>> factory,
-        CacheEntrySettings settings,
         CancellationToken cancellationToken = default)
     {
+        var key = query.CacheKey;
         var entryOptions = new HybridCacheEntryOptions
         {
-            Expiration = settings.Expiration,
-            LocalCacheExpiration = settings.Expiration < _localExpiration ? settings.Expiration : _localExpiration,
+            Expiration = query.Expiration,
+            LocalCacheExpiration = query.Expiration < _localExpiration ? query.Expiration : _localExpiration,
         };
 
         var factoryFailed = false;
@@ -46,13 +47,13 @@ internal sealed class HybridCacheService(
                 throw;
             }
 
-            await TrackAsync(key, settings);
+            await TrackAsync(query);
             return value;
         }
 
         try
         {
-            return await cache.GetOrCreateAsync(key, TrackedFactory, entryOptions, settings.Tags, cancellationToken);
+            return await cache.GetOrCreateAsync(key, TrackedFactory, entryOptions, query.Tags, cancellationToken);
         }
         catch (Exception exception) when (!factoryFailed && exception is not OperationCanceledException)
         {
@@ -101,15 +102,15 @@ internal sealed class HybridCacheService(
         }
     }
 
-    private async ValueTask TrackAsync(string key, CacheEntrySettings settings)
+    private async ValueTask TrackAsync(ICachedQuery query)
     {
         try
         {
-            await tagIndex.TrackAsync(key, settings.Tags, settings.Expiration);
+            await tagIndex.TrackAsync(query.CacheKey, query.Tags, query.Expiration);
         }
         catch (Exception exception)
         {
-            logger.LogWarning(exception, "Could not index {CacheKey} under its tags", key);
+            logger.LogWarning(exception, "Could not index {CacheKey} under its tags", query.CacheKey);
         }
     }
 }

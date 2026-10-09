@@ -1,26 +1,47 @@
-# Build output and IDE state
+# Build output and IDE state, at any depth
 **/bin/
 **/obj/
 **/TestResults/
+**/coverage/
 **/.vs/
 **/.vscode/
 **/.idea/
 **/*.user
 
-# Source control, CI and deployment files are not part of the image
+# Source control, CI, docs, tests and deployment files are not part of the image
 .git/
 .github/
 .template.config/
 deploy/
 tests/
+**/*.md
 
-# Secrets must never reach the build context
-.env
-.env.*
+# Secrets, keys and local data must never reach the build context
+**/.env
+**/.env.*
+**/*.env
 **/secrets.json
+**/appsettings.*.local.json
+**/appsettings.Local.json
+**/*.pem
+**/*.key
+**/*.p12
 **/*.pfx
+**/*.snk
+**/id_rsa*
+**/id_ed25519*
+**/*.db
+**/*.sqlite*
+**/*.mdf
+**/*.ldf
+
+# Backups and editor leftovers
+**/*.bak
+**/*.backup
+**/*.orig
+**/*.tmp
+**/*.swp
 
 # Files that change often but do not affect the build
 **/Dockerfile*
-docker-compose*.yml
-*.md
+**/docker-compose*.yml

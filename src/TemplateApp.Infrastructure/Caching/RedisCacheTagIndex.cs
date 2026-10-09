@@ -2,6 +2,8 @@ using Microsoft.Extensions.Options;
 
 using StackExchange.Redis;
 
+using TemplateApp.Infrastructure.Settings;
+
 namespace TemplateApp.Infrastructure.Caching;
 
 /// <summary>Keeps one Redis set of cache keys per tag. Requires Redis 7.0+ (conditional EXPIRE).</summary>

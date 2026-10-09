@@ -1,20 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
 using StackExchange.Redis;
 
-using TemplateApp.Application.Common.Caching;
-using TemplateApp.Application.Common.Data;
+using TemplateApp.Application.Common.Interfaces;
+using TemplateApp.Infrastructure;
 using TemplateApp.Infrastructure.Caching;
-using TemplateApp.Infrastructure.Persistence;
-using TemplateApp.Infrastructure.Persistence.Interceptors;
+using TemplateApp.Infrastructure.Data;
+using TemplateApp.Infrastructure.Data.Interceptors;
+using TemplateApp.Infrastructure.Settings;
 
-namespace TemplateApp.Infrastructure;
+namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {
@@ -33,6 +33,7 @@ public static class DependencyInjection
     {
         // Fail at startup, not on the first query. Not evaluated by EF tooling or --migrate, which never start the host.
         services.AddOptions<DatabaseOptions>()
+            .Bind(configuration.GetSection(DatabaseOptions.SectionName))
             .Configure<IConfiguration>((options, config) => options.ConnectionString = config.GetConnectionString(ConnectionStringNames.Database))
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), $"ConnectionStrings:{ConnectionStringNames.Database} is not configured.")
             .ValidateOnStart();
@@ -51,7 +52,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IAppDbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
-        services.AddScoped<DatabaseMigrator>();
+        services.AddScoped<ApplicationDbContextInitialiser>();
 
         services.AddHealthChecks()
             .AddDbContextCheck<AppDbContext>("database", tags: [HealthCheckTags.Ready]);

@@ -1,16 +1,15 @@
 using FluentValidation;
 
-using Microsoft.Extensions.DependencyInjection;
-
 using TemplateApp.Application.Common.Behaviours;
 
-namespace TemplateApp.Application;
+namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        var assembly = typeof(DependencyInjection).Assembly;
+        // Three layers declare a DependencyInjection class in this namespace (as in the original), so never refer to it by name.
+        var assembly = typeof(ValidationBehaviour<,>).Assembly;
 
         services.AddValidatorsFromAssembly(assembly);
 

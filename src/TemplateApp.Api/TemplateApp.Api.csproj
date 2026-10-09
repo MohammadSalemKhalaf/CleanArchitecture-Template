@@ -1,16 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+    <Description>TemplateApp HTTP API.</Description>
     <UserSecretsId>5f0f7d4e-3c1a-4b8e-9a51-2f6c1d8e7b90</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TemplateApp.Application\TemplateApp.Application.csproj" />
-    <!-- Referenced for service registration and the migrate mode only. Endpoints must go through MediatR. -->
+    <ProjectReference Include="..\TemplateApp.Contracts\TemplateApp.Contracts.csproj" />
+    <!-- Composition root only: service registration, database initialisation and migrate mode. Controllers must go through MediatR. -->
     <ProjectReference Include="..\TemplateApp.Infrastructure\TemplateApp.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
+    <PackageReference Include="Asp.Versioning.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Scalar.AspNetCore" />

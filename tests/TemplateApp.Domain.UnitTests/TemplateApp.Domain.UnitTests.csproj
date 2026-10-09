@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TemplateApp.Domain\TemplateApp.Domain.csproj" />
+    <ProjectReference Include="..\TemplateApp.Tests.Common\TemplateApp.Tests.Common.csproj" />
   </ItemGroup>
 
 </Project>

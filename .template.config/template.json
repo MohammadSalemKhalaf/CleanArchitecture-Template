@@ -58,14 +58,43 @@
             "**/[Bb]in/**",
             "**/[Oo]bj/**",
             "**/TestResults/**",
+            "**/coverage/**",
             "**/.vs/**",
             "**/.idea/**",
             "**/.vscode/**",
             "**/*.user",
             ".git/**",
-            ".env",
-            "deploy/release.env",
+            "**/.env",
+            "**/.env.*",
+            "**/*.env",
+            "**/secrets.json",
+            "**/appsettings.*.local.json",
+            "**/appsettings.Local.json",
+            "**/*.pem",
+            "**/*.key",
+            "**/*.p12",
+            "**/*.pfx",
+            "**/*.snk",
+            "**/id_rsa",
+            "**/id_rsa.*",
+            "**/id_ecdsa",
+            "**/id_ecdsa.*",
+            "**/id_ed25519",
+            "**/id_ed25519.*",
+            "**/*.bak",
+            "**/*.backup",
+            "**/*.orig",
+            "**/*.swp",
+            "**/*.db",
+            "**/*.sqlite*",
+            "**/*.mdf",
+            "**/*.ldf",
             "deploy/previous-image"
+          ]
+        },
+        {
+          "include": [
+            ".env.example"
           ]
         }
       ]

@@ -2,12 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TemplateApp.Application\TemplateApp.Application.csproj" />
+    <ProjectReference Include="..\TemplateApp.Tests.Common\TemplateApp.Tests.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Handler logic only. Database behaviour (unique indexes, SQL translation) is covered by Infrastructure.IntegrationTests. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
-    <PackageReference Include="NSubstitute" />
   </ItemGroup>
 
 </Project>

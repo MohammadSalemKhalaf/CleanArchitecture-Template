@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TemplateApp.Api\TemplateApp.Api.csproj" />
+    <ProjectReference Include="..\TemplateApp.Tests.Common\TemplateApp.Tests.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
